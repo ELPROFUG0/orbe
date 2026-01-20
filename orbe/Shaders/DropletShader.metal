@@ -100,7 +100,8 @@ float fbm2D(float2 p) {
     float motionNoise,
     float lightIntensity,
     float edgeIntensity,
-    float lensIntensity
+    float lensIntensity,
+    float reflectionIntensity
 ) {
     float2 uv = position / size;
     float2 center = float2(0.5, 0.5);
@@ -154,6 +155,33 @@ float fbm2D(float2 p) {
     sampleUV = clamp(sampleUV, float2(0.001), float2(0.999));
     float2 samplePos = sampleUV * size;
     half4 color = layer.sample(samplePos);
+
+    // === LIGHT - contrast adjustment ===
+    if (lightIntensity > 0.001) {
+        // Increase contrast: (color - 0.5) * contrast + 0.5
+        float contrast = 1.0 + lightIntensity * 0.8;
+        color.rgb = half3(clamp((float3(color.rgb) - 0.5) * contrast + 0.5, 0.0, 1.0));
+    }
+
+    // === REFLECTION - saturate colors at edges ===
+    if (reflectionIntensity > 0.001) {
+        // Only apply at the edges (outer 15% of radius)
+        float reflectEdge = smoothstep(0.85, 1.0, normalizedDist);
+
+        if (reflectEdge > 0.0) {
+            // Calculate luminance
+            float lum = dot(float3(color.rgb), float3(0.299, 0.587, 0.114));
+
+            // Increase saturation by moving away from gray
+            float satBoost = 1.0 + reflectEdge * reflectionIntensity * 1.5;
+            half3 saturatedColor = half3(mix(float3(lum), float3(color.rgb), satBoost));
+
+            // Also boost brightness slightly
+            saturatedColor *= half(1.0 + reflectEdge * reflectionIntensity * 0.3);
+
+            color.rgb = saturatedColor;
+        }
+    }
 
     return color;
 }

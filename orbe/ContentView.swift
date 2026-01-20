@@ -285,11 +285,12 @@ struct DropletOrbView: View {
                                 motionNoise: motionNoise,
                                 lightIntensity: lightIntensity,
                                 edgeIntensity: edgeIntensity,
-                                lensIntensity: lensIntensity
+                                lensIntensity: lensIntensity,
+                                reflectionIntensity: reflectionIntensity
                             )
                         )
                         .clipShape(Circle())
-                        .overlay(orbOverlays(size: orbSize, reflectionIntensity: reflectionIntensity))
+                        .overlay(orbOverlays(size: orbSize))
                         // Wavy border distortion - makes the circle wobble like jelly
                         .modifier(
                             WavyBorderModifier(
@@ -311,7 +312,7 @@ struct DropletOrbView: View {
     }
 
     // MARK: - Orb Overlays
-    private func orbOverlays(size: CGFloat, reflectionIntensity: Double) -> some View {
+    private func orbOverlays(size: CGFloat) -> some View {
         ZStack {
             // GLOW effect - inner luminosity for 3D depth
             if glowIntensity > 0.01 {
@@ -349,62 +350,28 @@ struct DropletOrbView: View {
                     .blur(radius: 10)
             }
 
-            // LIGHT effect - 3D shading with light from top-left
-            if lightIntensity > 0.01 {
-                // Bottom-right shadow for 3D depth
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.clear,
-                                Color.clear,
-                                Color.black.opacity(lightIntensity * 0.3),
-                                Color.black.opacity(lightIntensity * 0.5)
-                            ],
-                            center: UnitPoint(x: 0.3, y: 0.3),
-                            startRadius: size * 0.2,
-                            endRadius: size * 0.55
-                        )
-                    )
+            // Note: LIGHT effect (contrast) is now in the shader
 
-                // Subtle rim darkening on bottom-right
-                Circle()
-                    .trim(from: 0.0, to: 0.5)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.black.opacity(lightIntensity * 0.3),
-                                Color.black.opacity(lightIntensity * 0.5),
-                                Color.black.opacity(lightIntensity * 0.3)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        lineWidth: size * 0.06
-                    )
-                    .blur(radius: 6)
-            }
-
-            // EDGE effect - sharp 3D rim definition
+            // EDGE effect - soft rim definition
             if edgeIntensity > 0.01 {
-                // Dark rim all around for glass sphere look
+                // Soft dark rim for subtle depth
                 Circle()
                     .strokeBorder(
                         RadialGradient(
                             colors: [
-                                Color.black.opacity(edgeIntensity * 0.6),
                                 Color.black.opacity(edgeIntensity * 0.3),
+                                Color.black.opacity(edgeIntensity * 0.15),
                                 Color.clear
                             ],
                             center: .center,
-                            startRadius: size * 0.45,
+                            startRadius: size * 0.46,
                             endRadius: size * 0.5
                         ),
-                        lineWidth: size * 0.05
+                        lineWidth: size * 0.04
                     )
-                    .blur(radius: 2)
+                    .blur(radius: 4)
 
-                // Inner edge shadow for depth
+                // Very subtle inner vignette
                 Circle()
                     .fill(
                         RadialGradient(
@@ -412,79 +379,17 @@ struct DropletOrbView: View {
                                 Color.clear,
                                 Color.clear,
                                 Color.clear,
-                                Color.black.opacity(edgeIntensity * 0.2),
-                                Color.black.opacity(edgeIntensity * 0.5)
+                                Color.black.opacity(edgeIntensity * 0.1),
+                                Color.black.opacity(edgeIntensity * 0.25)
                             ],
                             center: .center,
-                            startRadius: size * 0.3,
+                            startRadius: size * 0.35,
                             endRadius: size * 0.5
                         )
                     )
             }
 
-            // Reflection highlights on the EDGE of the orb
-            if reflectionIntensity > 0.01 {
-                // Main highlight arc on top-left edge
-                Circle()
-                    .trim(from: 0.58, to: 0.82)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.0),
-                                Color.white.opacity(0.5 * reflectionIntensity),
-                                Color.white.opacity(0.7 * reflectionIntensity),
-                                Color.white.opacity(0.5 * reflectionIntensity),
-                                Color.white.opacity(0.0)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        style: StrokeStyle(lineWidth: size * 0.04, lineCap: .round)
-                    )
-                    .blur(radius: 4)
-
-                // Sharp highlight on edge
-                Circle()
-                    .trim(from: 0.62, to: 0.76)
-                    .stroke(
-                        Color.white.opacity(0.6 * reflectionIntensity),
-                        style: StrokeStyle(lineWidth: size * 0.015, lineCap: .round)
-                    )
-                    .blur(radius: 1)
-
-                // Subtle bottom-right edge reflection
-                Circle()
-                    .trim(from: 0.12, to: 0.28)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.0),
-                                Color.white.opacity(0.15 * reflectionIntensity),
-                                Color.white.opacity(0.0)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        style: StrokeStyle(lineWidth: size * 0.025, lineCap: .round)
-                    )
-                    .blur(radius: 3)
-
-                // Thin edge ring
-                Circle()
-                    .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.4 * reflectionIntensity),
-                                Color.white.opacity(0.15 * reflectionIntensity),
-                                Color.white.opacity(0.05 * reflectionIntensity),
-                                Color.white.opacity(0.1 * reflectionIntensity)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.0
-                    )
-            }
+            // Note: Reflection effect is now in the shader (bounces colors from opposite side)
         }
     }
 
@@ -520,6 +425,7 @@ struct DropletShaderModifier: ViewModifier {
     let lightIntensity: Double
     let edgeIntensity: Double
     let lensIntensity: Double
+    let reflectionIntensity: Double
 
     func body(content: Content) -> some View {
         content
@@ -533,7 +439,8 @@ struct DropletShaderModifier: ViewModifier {
                     .float(motionNoise),
                     .float(lightIntensity),
                     .float(edgeIntensity),
-                    .float(lensIntensity)
+                    .float(lensIntensity),
+                    .float(reflectionIntensity)
                 ),
                 maxSampleOffset: CGSize(width: 100, height: 100)
             )
