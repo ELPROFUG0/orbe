@@ -21,7 +21,7 @@ struct ContentView: View {
     @State private var lightIntensity: Double = 0.3
     @State private var edgeIntensity: Double = 0.5
     @State private var lensIntensity: Double = 0.7
-    @State private var reflectionIntensity: Double = 0.5
+    @State private var reflectionEnabled: Bool = true
 
     @State private var selectedTab: Int = 0
     @State private var showControls = true
@@ -56,7 +56,7 @@ struct ContentView: View {
                     lightIntensity: lightIntensity,
                     edgeIntensity: edgeIntensity,
                     lensIntensity: lensIntensity,
-                    reflectionIntensity: reflectionIntensity
+                    reflectionEnabled: reflectionEnabled
                 )
                 .frame(height: UIScreen.main.bounds.height * 0.5)
 
@@ -191,7 +191,7 @@ struct ContentView: View {
                 sliderRow(title: "Light", value: $lightIntensity, range: 0...1)
                 sliderRow(title: "Edge", value: $edgeIntensity, range: 0...1)
                 sliderRow(title: "Lens", value: $lensIntensity, range: 0...1)
-                sliderRow(title: "Reflection", value: $reflectionIntensity, range: 0...1)
+                toggleRow(title: "Reflection", isOn: $reflectionEnabled)
             }
         }
         .padding(.horizontal, 24)
@@ -236,7 +236,7 @@ struct ContentView: View {
             lightIntensity = 0.3
             edgeIntensity = 0.5
             lensIntensity = 0.7
-            reflectionIntensity = 0.5
+            reflectionEnabled = true
         }
     }
 
@@ -260,7 +260,7 @@ struct DropletOrbView: View {
     let lightIntensity: Double
     let edgeIntensity: Double
     let lensIntensity: Double
-    let reflectionIntensity: Double
+    let reflectionEnabled: Bool
 
     var body: some View {
         GeometryReader { geo in
@@ -286,7 +286,7 @@ struct DropletOrbView: View {
                                 lightIntensity: lightIntensity,
                                 edgeIntensity: edgeIntensity,
                                 lensIntensity: lensIntensity,
-                                reflectionIntensity: reflectionIntensity
+                                reflectionEnabled: reflectionEnabled
                             )
                         )
                         .clipShape(Circle())
@@ -425,7 +425,7 @@ struct DropletShaderModifier: ViewModifier {
     let lightIntensity: Double
     let edgeIntensity: Double
     let lensIntensity: Double
-    let reflectionIntensity: Double
+    let reflectionEnabled: Bool
 
     func body(content: Content) -> some View {
         content
@@ -440,7 +440,7 @@ struct DropletShaderModifier: ViewModifier {
                     .float(lightIntensity),
                     .float(edgeIntensity),
                     .float(lensIntensity),
-                    .float(reflectionIntensity)
+                    .float(reflectionEnabled ? 1.0 : 0.0)
                 ),
                 maxSampleOffset: CGSize(width: 100, height: 100)
             )

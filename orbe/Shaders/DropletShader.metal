@@ -163,23 +163,34 @@ float fbm2D(float2 p) {
         color.rgb = half3(clamp((float3(color.rgb) - 0.5) * contrast + 0.5, 0.0, 1.0));
     }
 
-    // === REFLECTION - saturate colors at edges ===
+    // === REFLECTION - flipped image bleeds at edges (snow globe effect) ===
     if (reflectionIntensity > 0.001) {
         // Only apply at the edges (outer 15% of radius)
         float reflectEdge = smoothstep(0.85, 1.0, normalizedDist);
 
         if (reflectEdge > 0.0) {
-            // Calculate luminance
-            float lum = dot(float3(color.rgb), float3(0.299, 0.587, 0.114));
+            // Sample from FLIPPED position (mirror across center)
+            float2 flippedUV = 1.0 - sampleUV;
 
-            // Increase saturation by moving away from gray
-            float satBoost = 1.0 + reflectEdge * reflectionIntensity * 1.5;
-            half3 saturatedColor = half3(mix(float3(lum), float3(color.rgb), satBoost));
+            // Blur effect: sample multiple points around flipped position
+            half4 flippedColor = half4(0.0);
+            float blurAmount = 0.03; // Blur radius
 
-            // Also boost brightness slightly
-            saturatedColor *= half(1.0 + reflectEdge * reflectionIntensity * 0.3);
+            // Simple 5-tap blur
+            flippedColor += layer.sample(clamp(flippedUV, 0.001, 0.999) * size);
+            flippedColor += layer.sample(clamp(flippedUV + float2(blurAmount, 0), 0.001, 0.999) * size);
+            flippedColor += layer.sample(clamp(flippedUV + float2(-blurAmount, 0), 0.001, 0.999) * size);
+            flippedColor += layer.sample(clamp(flippedUV + float2(0, blurAmount), 0.001, 0.999) * size);
+            flippedColor += layer.sample(clamp(flippedUV + float2(0, -blurAmount), 0.001, 0.999) * size);
+            flippedColor /= 5.0h;
 
-            color.rgb = saturatedColor;
+            // Slightly saturate the flipped color
+            float lum = dot(float3(flippedColor.rgb), float3(0.299, 0.587, 0.114));
+            half3 saturatedFlipped = half3(mix(float3(lum), float3(flippedColor.rgb), 1.3));
+
+            // Blend flipped color at edges
+            float blendFactor = reflectEdge * reflectionIntensity * 0.5;
+            color.rgb = mix(color.rgb, saturatedFlipped, half(blendFactor));
         }
     }
 
