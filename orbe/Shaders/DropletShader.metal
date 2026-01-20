@@ -120,8 +120,20 @@ float fbm2D(float2 p) {
     float newDist = normalizedDist;
 
     if (lensIntensity > 0.001) {
-        float power = 1.0 + lensIntensity * 1.5;
+        // === EDGE REFRACTION - stretch image at borders ===
+        // This creates the "water droplet" effect where colors bleed outward at edges
+        // Starts at 85% of radius, maximum effect at the very edge
+        float edgeZone = smoothstep(0.85, 1.0, normalizedDist);
+
+        // Subtle fisheye only in the center (reduced effect)
+        float power = 1.0 + lensIntensity * 0.5 * (1.0 - edgeZone);
         newDist = pow(normalizedDist, power);
+
+        // Strong stretch at the edge - samples from further inside
+        if (edgeZone > 0.0) {
+            float stretchFactor = 1.0 - edgeZone * lensIntensity * 0.6;
+            newDist *= stretchFactor;
+        }
     }
 
     float2 distortedDelta = float2(cos(angle), sin(angle)) * newDist * radius;
