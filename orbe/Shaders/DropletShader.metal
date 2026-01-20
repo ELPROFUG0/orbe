@@ -52,36 +52,40 @@ float fbm2D(float2 p) {
     float2 center = float2(0.5, 0.5);
     float2 delta = uv - center;
     float dist = length(delta);
-    float angle = atan2(delta.y, delta.x);
 
     // Base radius
     float radius = 0.5;
 
-    if (motionStrength < 0.001) {
+    if (motionStrength < 0.001 || dist < 0.01) {
         return position;
     }
 
     // === WAVY BORDER DISTORTION ===
-    // Multiple wave frequencies for organic look
-    float wave1 = sin(angle * motionFrequency * 8.0 + time * motionSpeed * 4.0) * motionStrength * 0.15;
-    float wave2 = sin(angle * motionFrequency * 12.0 - time * motionSpeed * 6.0) * motionStrength * 0.08;
-    float wave3 = sin(angle * motionFrequency * 5.0 + time * motionSpeed * 2.5) * motionStrength * 0.12;
+    // Use position-based waves instead of angle to avoid discontinuity at left edge
+    float2 normalizedDelta = delta / dist;
+
+    // Waves based on x and y position (no angle discontinuity)
+    float wave1 = sin(uv.x * motionFrequency * 20.0 + time * motionSpeed * 4.0) * motionStrength * 0.1;
+    float wave2 = sin(uv.y * motionFrequency * 20.0 - time * motionSpeed * 5.0) * motionStrength * 0.1;
+    float wave3 = sin((uv.x + uv.y) * motionFrequency * 15.0 + time * motionSpeed * 3.0) * motionStrength * 0.08;
 
     // Noise-based organic distortion
-    float noiseAngle = angle + time * motionSpeed * 0.5;
-    float noiseWave = (fbm2D(float2(noiseAngle * 2.0, time * motionSpeed)) - 0.5) * motionNoise * motionStrength * 0.2;
+    float2 noiseCoord = uv * 3.0 + float2(time * motionSpeed * 0.3);
+    float noiseWave = (fbm2D(noiseCoord) - 0.5) * motionNoise * motionStrength * 0.15;
 
-    // Combine all waves
+    // Combine waves
     float totalWave = wave1 + wave2 + wave3 + noiseWave;
 
-    // Apply wave distortion - stronger at edges
-    float edgeFactor = smoothstep(0.0, 1.0, dist / radius);
-    float2 waveOffset = normalize(delta + 0.0001) * totalWave * edgeFactor;
+    // Apply wave distortion - stronger at edges, zero at center
+    float edgeFactor = smoothstep(0.2, 0.8, dist / radius);
 
-    // Also add some internal ripple
+    // Direction from center
+    float2 waveOffset = normalizedDelta * totalWave * edgeFactor;
+
+    // Internal ripple
     float ripple = sin(dist * motionFrequency * 20.0 - time * motionSpeed * 5.0);
-    ripple *= motionStrength * (1.0 - edgeFactor) * 0.03;
-    float2 rippleOffset = normalize(delta + 0.0001) * ripple;
+    ripple *= motionStrength * (1.0 - edgeFactor) * 0.02;
+    float2 rippleOffset = normalizedDelta * ripple;
 
     float2 newPos = position + (waveOffset + rippleOffset) * size;
 
