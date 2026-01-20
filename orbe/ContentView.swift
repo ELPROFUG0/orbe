@@ -21,6 +21,7 @@ struct ContentView: View {
     @State private var lightIntensity: Double = 0.3
     @State private var edgeIntensity: Double = 0.5
     @State private var lensIntensity: Double = 0.7
+    @State private var reflectionIntensity: Double = 0.5
 
     @State private var selectedTab: Int = 0
     @State private var showControls = true
@@ -54,7 +55,8 @@ struct ContentView: View {
                     glowIntensity: glowIntensity,
                     lightIntensity: lightIntensity,
                     edgeIntensity: edgeIntensity,
-                    lensIntensity: lensIntensity
+                    lensIntensity: lensIntensity,
+                    reflectionIntensity: reflectionIntensity
                 )
                 .frame(height: UIScreen.main.bounds.height * 0.5)
 
@@ -189,6 +191,7 @@ struct ContentView: View {
                 sliderRow(title: "Light", value: $lightIntensity, range: 0...1)
                 sliderRow(title: "Edge", value: $edgeIntensity, range: 0...1)
                 sliderRow(title: "Lens", value: $lensIntensity, range: 0...1)
+                sliderRow(title: "Reflection", value: $reflectionIntensity, range: 0...1)
             }
         }
         .padding(.horizontal, 24)
@@ -233,6 +236,7 @@ struct ContentView: View {
             lightIntensity = 0.3
             edgeIntensity = 0.5
             lensIntensity = 0.7
+            reflectionIntensity = 0.5
         }
     }
 
@@ -256,6 +260,7 @@ struct DropletOrbView: View {
     let lightIntensity: Double
     let edgeIntensity: Double
     let lensIntensity: Double
+    let reflectionIntensity: Double
 
     var body: some View {
         GeometryReader { geo in
@@ -284,7 +289,7 @@ struct DropletOrbView: View {
                             )
                         )
                         .clipShape(Circle())
-                        .overlay(orbOverlays(size: orbSize))
+                        .overlay(orbOverlays(size: orbSize, reflectionIntensity: reflectionIntensity))
                         // Wavy border distortion - makes the circle wobble like jelly
                         .modifier(
                             WavyBorderModifier(
@@ -306,7 +311,7 @@ struct DropletOrbView: View {
     }
 
     // MARK: - Orb Overlays
-    private func orbOverlays(size: CGFloat) -> some View {
+    private func orbOverlays(size: CGFloat, reflectionIntensity: Double) -> some View {
         ZStack {
             // GLOW effect - concentrated white glow from edge inward
             if glowIntensity > 0.01 {
@@ -357,62 +362,76 @@ struct DropletOrbView: View {
                     )
                 )
 
-            // Main highlight (top-left)
-            Ellipse()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.white.opacity(0.7),
-                            Color.white.opacity(0.3),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: size * 0.15
+            // Main reflection highlight (top-left arc)
+            if reflectionIntensity > 0.01 {
+                Ellipse()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5 * reflectionIntensity),
+                                Color.white.opacity(0.2 * reflectionIntensity),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .frame(width: size * 0.3, height: size * 0.2)
-                .offset(x: -size * 0.15, y: -size * 0.2)
-                .blur(radius: 6)
+                    .frame(width: size * 0.5, height: size * 0.25)
+                    .offset(x: -size * 0.1, y: -size * 0.28)
+                    .rotationEffect(.degrees(-20))
+                    .blur(radius: 8)
 
-            // Small specular
-            Circle()
-                .fill(Color.white.opacity(0.9))
-                .frame(width: size * 0.05, height: size * 0.05)
-                .offset(x: -size * 0.12, y: -size * 0.22)
-                .blur(radius: 1)
-
-            // Bottom subtle reflection
-            Ellipse()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.white.opacity(0.15),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: size * 0.1
+                // Secondary reflection (curved light band)
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.4 * reflectionIntensity),
+                                Color.white.opacity(0.15 * reflectionIntensity),
+                                Color.clear
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
-                .frame(width: size * 0.25, height: size * 0.12)
-                .offset(x: size * 0.1, y: size * 0.25)
-                .blur(radius: 4)
+                    .frame(width: size * 0.35, height: size * 0.08)
+                    .offset(x: -size * 0.12, y: -size * 0.32)
+                    .rotationEffect(.degrees(-35))
+                    .blur(radius: 3)
 
-            // Edge ring
-            Circle()
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.4),
-                            Color.white.opacity(0.15),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1.5
-                )
+                // Bottom reflection (subtle curved light)
+                Ellipse()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.clear,
+                                Color.white.opacity(0.1 * reflectionIntensity),
+                                Color.white.opacity(0.05 * reflectionIntensity)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .frame(width: size * 0.4, height: size * 0.15)
+                    .offset(x: size * 0.05, y: size * 0.3)
+                    .blur(radius: 5)
+
+                // Edge ring with reflection gradient
+                Circle()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.5 * reflectionIntensity),
+                                Color.white.opacity(0.2 * reflectionIntensity),
+                                Color.white.opacity(0.05 * reflectionIntensity),
+                                Color.white.opacity(0.1 * reflectionIntensity)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            }
         }
     }
 

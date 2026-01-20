@@ -116,12 +116,10 @@ float fbm2D(float2 p) {
     float normalizedDist = dist / radius;
     float angle = atan2(delta.y, delta.x);
 
-    // === LENS DISTORTION (Water droplet - magnifies center) ===
+    // === LENS DISTORTION ===
     float newDist = normalizedDist;
 
     if (lensIntensity > 0.001) {
-        // Inverse power to EXPAND center (like looking through water droplet)
-        // This pulls pixels from edges toward center = magnification
         float power = 1.0 + lensIntensity * 1.5;
         newDist = pow(normalizedDist, power);
     }
