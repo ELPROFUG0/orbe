@@ -262,17 +262,6 @@ struct DropletOrbView: View {
             let orbSize = min(geo.size.width, geo.size.height) * 0.88
 
             ZStack {
-                // WHITE Glow OUTSIDE the orb (like an aura around the edge)
-                if glowIntensity > 0.01 {
-                    Circle()
-                        .stroke(
-                            Color.white.opacity(glowIntensity * 0.8),
-                            lineWidth: orbSize * 0.15 * glowIntensity
-                        )
-                        .frame(width: orbSize, height: orbSize)
-                        .blur(radius: 20 * glowIntensity + 10)
-                }
-
                 // Main orb with shader AND wavy border distortion
                 if let uiImage = image {
                     Image(uiImage: uiImage)
@@ -319,6 +308,24 @@ struct DropletOrbView: View {
     // MARK: - Orb Overlays
     private func orbOverlays(size: CGFloat) -> some View {
         ZStack {
+            // GLOW effect - concentrated white glow from edge inward
+            if glowIntensity > 0.01 {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.clear,
+                                Color.white.opacity(glowIntensity * 0.6),
+                                Color.white.opacity(glowIntensity * 0.9)
+                            ],
+                            center: .center,
+                            startRadius: size * (0.4 - glowIntensity * 0.2),
+                            endRadius: size * 0.5
+                        )
+                    )
+                    .blur(radius: 3 + glowIntensity * 2)
+            }
+
             // Light/vignette effect
             Circle()
                 .fill(
@@ -333,19 +340,21 @@ struct DropletOrbView: View {
                     )
                 )
 
-            // Edge darkening
+            // Edge effect - soft gradient pushing inward
             Circle()
-                .strokeBorder(
+                .fill(
                     RadialGradient(
                         colors: [
                             Color.clear,
-                            Color.black.opacity(edgeIntensity * 0.7)
+                            Color.clear,
+                            Color.black.opacity(edgeIntensity * 0.15),
+                            Color.black.opacity(edgeIntensity * 0.3),
+                            Color.black.opacity(edgeIntensity * 0.5)
                         ],
                         center: .center,
-                        startRadius: size * 0.2,
+                        startRadius: size * (0.25 - edgeIntensity * 0.1),
                         endRadius: size * 0.5
-                    ),
-                    lineWidth: size * 0.2
+                    )
                 )
 
             // Main highlight (top-left)
