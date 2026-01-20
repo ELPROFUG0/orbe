@@ -123,8 +123,8 @@ float fbm2D(float2 p) {
     if (lensIntensity > 0.001) {
         // === EDGE REFRACTION - stretch image at borders ===
         // This creates the "water droplet" effect where colors bleed outward at edges
-        // Starts at 85% of radius, maximum effect at the very edge
-        float edgeZone = smoothstep(0.85, 1.0, normalizedDist);
+        // Starts at 90% of radius, maximum effect at the very edge
+        float edgeZone = smoothstep(0.90, 1.0, normalizedDist);
 
         // Subtle fisheye only in the center (reduced effect)
         float power = 1.0 + lensIntensity * 0.5 * (1.0 - edgeZone);
@@ -163,34 +163,39 @@ float fbm2D(float2 p) {
         color.rgb = half3(clamp((float3(color.rgb) - 0.5) * contrast + 0.5, 0.0, 1.0));
     }
 
-    // === REFLECTION - flipped image bleeds at edges (snow globe effect) ===
+    // === REFLECTION - colored glow bleeding toward edges ===
     if (reflectionIntensity > 0.001) {
-        // Only apply at the edges (outer 15% of radius)
-        float reflectEdge = smoothstep(0.85, 1.0, normalizedDist);
+        // Glow starts from 70% of radius and increases toward edges
+        float glowEdge = smoothstep(0.70, 1.0, normalizedDist);
 
-        if (reflectEdge > 0.0) {
-            // Sample from FLIPPED position (mirror across center)
+        if (glowEdge > 0.0) {
+            // Sample from flipped position with heavy blur for glow effect
             float2 flippedUV = 1.0 - sampleUV;
 
-            // Blur effect: sample multiple points around flipped position
-            half4 flippedColor = half4(0.0);
-            float blurAmount = 0.03; // Blur radius
+            // Large blur for soft glow - 9-tap blur spreading outward
+            half4 glowColor = half4(0.0);
+            float blurAmount = 0.08; // Larger blur for glow
 
-            // Simple 5-tap blur
-            flippedColor += layer.sample(clamp(flippedUV, 0.001, 0.999) * size);
-            flippedColor += layer.sample(clamp(flippedUV + float2(blurAmount, 0), 0.001, 0.999) * size);
-            flippedColor += layer.sample(clamp(flippedUV + float2(-blurAmount, 0), 0.001, 0.999) * size);
-            flippedColor += layer.sample(clamp(flippedUV + float2(0, blurAmount), 0.001, 0.999) * size);
-            flippedColor += layer.sample(clamp(flippedUV + float2(0, -blurAmount), 0.001, 0.999) * size);
-            flippedColor /= 5.0h;
+            // Center + 8 surrounding samples for smooth glow
+            glowColor += layer.sample(clamp(flippedUV, 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(blurAmount, 0), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(-blurAmount, 0), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(0, blurAmount), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(0, -blurAmount), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(blurAmount, blurAmount), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(-blurAmount, blurAmount), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(blurAmount, -blurAmount), 0.001, 0.999) * size);
+            glowColor += layer.sample(clamp(flippedUV + float2(-blurAmount, -blurAmount), 0.001, 0.999) * size);
+            glowColor /= 9.0h;
 
-            // Slightly saturate the flipped color
-            float lum = dot(float3(flippedColor.rgb), float3(0.299, 0.587, 0.114));
-            half3 saturatedFlipped = half3(mix(float3(lum), float3(flippedColor.rgb), 1.3));
+            // Boost saturation and brightness for glow effect
+            float lum = dot(float3(glowColor.rgb), float3(0.299, 0.587, 0.114));
+            half3 saturatedGlow = half3(mix(float3(lum), float3(glowColor.rgb), 1.5)); // More saturation
+            saturatedGlow *= 1.2h; // Brighter glow
 
-            // Blend flipped color at edges
-            float blendFactor = reflectEdge * reflectionIntensity * 0.5;
-            color.rgb = mix(color.rgb, saturatedFlipped, half(blendFactor));
+            // Blend glow color at edges - stronger effect spreading outward
+            float blendFactor = glowEdge * glowEdge * reflectionIntensity * 0.6;
+            color.rgb = mix(color.rgb, saturatedGlow, half(blendFactor));
         }
     }
 
