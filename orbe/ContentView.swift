@@ -362,74 +362,67 @@ struct DropletOrbView: View {
                     )
                 )
 
-            // Main reflection highlight (top-left arc)
+            // Reflection highlights on the EDGE of the orb
             if reflectionIntensity > 0.01 {
-                Ellipse()
-                    .fill(
+                // Main highlight arc on top-left edge
+                Circle()
+                    .trim(from: 0.58, to: 0.82)
+                    .stroke(
                         LinearGradient(
                             colors: [
+                                Color.white.opacity(0.0),
                                 Color.white.opacity(0.5 * reflectionIntensity),
-                                Color.white.opacity(0.2 * reflectionIntensity),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: size * 0.5, height: size * 0.25)
-                    .offset(x: -size * 0.1, y: -size * 0.28)
-                    .rotationEffect(.degrees(-20))
-                    .blur(radius: 8)
-
-                // Secondary reflection (curved light band)
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.4 * reflectionIntensity),
-                                Color.white.opacity(0.15 * reflectionIntensity),
-                                Color.clear
+                                Color.white.opacity(0.7 * reflectionIntensity),
+                                Color.white.opacity(0.5 * reflectionIntensity),
+                                Color.white.opacity(0.0)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
-                        )
+                        ),
+                        style: StrokeStyle(lineWidth: size * 0.04, lineCap: .round)
                     )
-                    .frame(width: size * 0.35, height: size * 0.08)
-                    .offset(x: -size * 0.12, y: -size * 0.32)
-                    .rotationEffect(.degrees(-35))
-                    .blur(radius: 3)
+                    .blur(radius: 4)
 
-                // Bottom reflection (subtle curved light)
-                Ellipse()
-                    .fill(
+                // Sharp highlight on edge
+                Circle()
+                    .trim(from: 0.62, to: 0.76)
+                    .stroke(
+                        Color.white.opacity(0.6 * reflectionIntensity),
+                        style: StrokeStyle(lineWidth: size * 0.015, lineCap: .round)
+                    )
+                    .blur(radius: 1)
+
+                // Subtle bottom-right edge reflection
+                Circle()
+                    .trim(from: 0.12, to: 0.28)
+                    .stroke(
                         LinearGradient(
                             colors: [
-                                Color.clear,
-                                Color.white.opacity(0.1 * reflectionIntensity),
-                                Color.white.opacity(0.05 * reflectionIntensity)
+                                Color.white.opacity(0.0),
+                                Color.white.opacity(0.15 * reflectionIntensity),
+                                Color.white.opacity(0.0)
                             ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        style: StrokeStyle(lineWidth: size * 0.025, lineCap: .round)
                     )
-                    .frame(width: size * 0.4, height: size * 0.15)
-                    .offset(x: size * 0.05, y: size * 0.3)
-                    .blur(radius: 5)
+                    .blur(radius: 3)
 
-                // Edge ring with reflection gradient
+                // Thin edge ring
                 Circle()
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.5 * reflectionIntensity),
-                                Color.white.opacity(0.2 * reflectionIntensity),
+                                Color.white.opacity(0.4 * reflectionIntensity),
+                                Color.white.opacity(0.15 * reflectionIntensity),
                                 Color.white.opacity(0.05 * reflectionIntensity),
                                 Color.white.opacity(0.1 * reflectionIntensity)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.5
+                        lineWidth: 1.0
                     )
             }
         }
