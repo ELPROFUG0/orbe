@@ -35,36 +35,40 @@ struct ContentView: View {
     let timer = Timer.publish(every: 1/60, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                headerView
+                VStack(spacing: 0) {
+                    headerView
 
-                Spacer()
+                    Spacer(minLength: 20)
 
-                // Orb with Metal shader effects
-                DropletOrbView(
-                    image: selectedImage,
-                    time: animationTime,
-                    motionEnabled: motionEnabled,
-                    motionSpeed: motionSpeed,
-                    motionStrength: motionStrength,
-                    motionFrequency: motionFrequency,
-                    motionNoise: motionNoise,
-                    glowIntensity: glowIntensity,
-                    lightIntensity: lightIntensity,
-                    edgeIntensity: edgeIntensity,
-                    lensIntensity: lensIntensity,
-                    reflectionEnabled: reflectionEnabled
-                )
-                .frame(height: UIScreen.main.bounds.height * 0.5)
+                    // Orb with Metal shader effects
+                    DropletOrbView(
+                        image: selectedImage,
+                        time: animationTime,
+                        motionEnabled: motionEnabled,
+                        motionSpeed: motionSpeed,
+                        motionStrength: motionStrength,
+                        motionFrequency: motionFrequency,
+                        motionNoise: motionNoise,
+                        glowIntensity: glowIntensity,
+                        lightIntensity: lightIntensity,
+                        edgeIntensity: edgeIntensity,
+                        lensIntensity: lensIntensity,
+                        reflectionEnabled: reflectionEnabled
+                    )
+                    .frame(width: min(geometry.size.width * 0.85, geometry.size.height * 0.4),
+                           height: min(geometry.size.width * 0.85, geometry.size.height * 0.4))
 
-                Spacer()
+                    Spacer(minLength: 20)
 
-                if showControls {
-                    controlsSection
+                    if showControls {
+                        controlsSection
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .onTapGesture {
@@ -179,7 +183,7 @@ struct ContentView: View {
 
     // MARK: - Controls
     private var controlsView: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 10) {
             if selectedTab == 0 {
                 toggleRow(title: "Animate", isOn: $motionEnabled)
                 sliderRow(title: "Speed", value: $motionSpeed, range: 0...1)
@@ -198,14 +202,14 @@ struct ContentView: View {
     }
 
     private func sliderRow(title: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             HStack {
                 Text(title)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
                 Spacer()
                 Text(String(format: "%.2f", value.wrappedValue))
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundColor(.white.opacity(0.5))
             }
             Slider(value: value, in: range)
@@ -216,11 +220,12 @@ struct ContentView: View {
     private func toggleRow(title: String, isOn: Binding<Bool>) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.white.opacity(0.8))
             Spacer()
             Toggle("", isOn: isOn)
                 .tint(.green)
+                .scaleEffect(0.85)
         }
     }
 
