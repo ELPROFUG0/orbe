@@ -313,54 +313,114 @@ struct DropletOrbView: View {
     // MARK: - Orb Overlays
     private func orbOverlays(size: CGFloat, reflectionIntensity: Double) -> some View {
         ZStack {
-            // GLOW effect - concentrated white glow from edge inward
+            // GLOW effect - inner luminosity for 3D depth
             if glowIntensity > 0.01 {
+                // Outer glow ring - creates depth at edge
+                Circle()
+                    .stroke(
+                        RadialGradient(
+                            colors: [
+                                Color.white.opacity(glowIntensity * 0.4),
+                                Color.white.opacity(glowIntensity * 0.2),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: size * 0.48,
+                            endRadius: size * 0.52
+                        ),
+                        lineWidth: size * 0.08
+                    )
+                    .blur(radius: 8 + glowIntensity * 4)
+
+                // Inner highlight - top-left light source
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.white.opacity(glowIntensity * 0.3),
+                                Color.white.opacity(glowIntensity * 0.1),
+                                Color.clear
+                            ],
+                            center: UnitPoint(x: 0.3, y: 0.3),
+                            startRadius: 0,
+                            endRadius: size * 0.4
+                        )
+                    )
+                    .blur(radius: 10)
+            }
+
+            // LIGHT effect - 3D shading with light from top-left
+            if lightIntensity > 0.01 {
+                // Bottom-right shadow for 3D depth
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [
                                 Color.clear,
-                                Color.white.opacity(glowIntensity * 0.6),
-                                Color.white.opacity(glowIntensity * 0.9)
+                                Color.clear,
+                                Color.black.opacity(lightIntensity * 0.3),
+                                Color.black.opacity(lightIntensity * 0.5)
+                            ],
+                            center: UnitPoint(x: 0.3, y: 0.3),
+                            startRadius: size * 0.2,
+                            endRadius: size * 0.55
+                        )
+                    )
+
+                // Subtle rim darkening on bottom-right
+                Circle()
+                    .trim(from: 0.0, to: 0.5)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.black.opacity(lightIntensity * 0.3),
+                                Color.black.opacity(lightIntensity * 0.5),
+                                Color.black.opacity(lightIntensity * 0.3)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ),
+                        lineWidth: size * 0.06
+                    )
+                    .blur(radius: 6)
+            }
+
+            // EDGE effect - sharp 3D rim definition
+            if edgeIntensity > 0.01 {
+                // Dark rim all around for glass sphere look
+                Circle()
+                    .strokeBorder(
+                        RadialGradient(
+                            colors: [
+                                Color.black.opacity(edgeIntensity * 0.6),
+                                Color.black.opacity(edgeIntensity * 0.3),
+                                Color.clear
                             ],
                             center: .center,
-                            startRadius: size * (0.4 - glowIntensity * 0.2),
+                            startRadius: size * 0.45,
+                            endRadius: size * 0.5
+                        ),
+                        lineWidth: size * 0.05
+                    )
+                    .blur(radius: 2)
+
+                // Inner edge shadow for depth
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.clear,
+                                Color.clear,
+                                Color.clear,
+                                Color.black.opacity(edgeIntensity * 0.2),
+                                Color.black.opacity(edgeIntensity * 0.5)
+                            ],
+                            center: .center,
+                            startRadius: size * 0.3,
                             endRadius: size * 0.5
                         )
                     )
-                    .blur(radius: 3 + glowIntensity * 2)
             }
-
-            // Light/vignette effect
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.clear,
-                            Color.black.opacity(lightIntensity * 0.4)
-                        ],
-                        center: .center,
-                        startRadius: size * 0.15,
-                        endRadius: size * 0.5
-                    )
-                )
-
-            // Edge effect - soft gradient pushing inward
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color.clear,
-                            Color.clear,
-                            Color.black.opacity(edgeIntensity * 0.15),
-                            Color.black.opacity(edgeIntensity * 0.3),
-                            Color.black.opacity(edgeIntensity * 0.5)
-                        ],
-                        center: .center,
-                        startRadius: size * (0.25 - edgeIntensity * 0.1),
-                        endRadius: size * 0.5
-                    )
-                )
 
             // Reflection highlights on the EDGE of the orb
             if reflectionIntensity > 0.01 {
