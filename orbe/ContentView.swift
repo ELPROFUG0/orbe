@@ -39,6 +39,19 @@ struct ContentView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
+                // Blurred background image
+                if let bgImage = selectedImage {
+                    Image(uiImage: bgImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .blur(radius: 40)
+                        .brightness(0.1)
+                        .opacity(0.5)
+                        .ignoresSafeArea()
+                }
+
                 VStack(spacing: 0) {
                     headerView
 
@@ -98,10 +111,10 @@ struct ContentView: View {
     private var headerView: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Dream")
-                    .font(.system(size: 28, weight: .light, design: .serif))
+                Text("orbe")
+                    .font(.system(size: 28, weight: .light, design: .rounded))
                     .italic()
-                Text("MACHINE")
+                Text("STUDIO")
                     .font(.system(size: 12, weight: .bold))
                     .tracking(3)
                     .foregroundColor(.white.opacity(0.7))
