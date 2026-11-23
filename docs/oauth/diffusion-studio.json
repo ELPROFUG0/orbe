@@ -1,0 +1,16 @@
+{
+  "client_id": "https://elprofug0.github.io/orbe/oauth/diffusion-studio.json",
+  "client_name": "Diffusion Studio (local)",
+  "client_uri": "https://github.com/ELPROFUG0/orbe/blob/main/docs/oauth/README.md",
+  "redirect_uris": [
+    "http://127.0.0.1:49172/callback"
+  ],
+  "grant_types": [
+    "authorization_code",
+    "refresh_token"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "token_endpoint_auth_method": "none"
+}
